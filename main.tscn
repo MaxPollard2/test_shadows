@@ -36,7 +36,7 @@ mesh = SubResource("BoxMesh_7dm0k")
 skeleton = NodePath("../..")
 
 [node name="Camera3D" type="Camera3D" parent="shadow"]
-transform = Transform3D(0.997235, -0.0120027, -0.0733456, 0.0139798, 0.999551, 0.0265017, 0.0729951, -0.0274537, 0.996954, -0.0019151, 0, 1.63678)
+transform = Transform3D(0.96435, -0.0204827, 0.263836, 0.0139798, 0.999551, 0.0265017, -0.264261, -0.0218685, 0.964203, 1.61394, 0, 3.07768)
 
 [node name="TextureRect" type="TextureRect" parent="shadow"]
 offset_left = 21.0

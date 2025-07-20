@@ -14,3 +14,7 @@ config/name="Test Shadows"
 run/main_scene="uid://wvt2pdqt47jw"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
+
+[display]
+
+window/vsync/vsync_mode=0

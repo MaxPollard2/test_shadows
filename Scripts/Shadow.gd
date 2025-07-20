@@ -1,39 +1,65 @@
 extends Node
 class_name shadow
 
-var depth_texture : Texture2DRD
+var rd: RenderingDevice
+var shader_rid: RID
+var pipeline: RID
 
-var rd : RenderingDevice
+var fb_rid: RID
+var vertex_buffer: RID
+var vertex_array_rid: RID
+var vertex_count: int
 
-var fb_rid
-var vertex_buffer
-var vertex_count
+var depth_texture: Texture2DRD
+var clear_colors: PackedColorArray
 
-var shader_rid : RID
+var view_proj_uniform_buffer: RID
+var view_proj_uniform_set: RID
 
 @export var mesh_path: NodePath
-var mesh_instance: MeshInstance3D
-
 @export var camera_path: NodePath
-var camera: Camera3D
-
 @export var rect_path: NodePath
+
+var mesh_instance: MeshInstance3D
+var camera: Camera3D
 var rect: TextureRect
 
-func _process(delta: float) -> void:
-	var view_proj_matrix = _get_view_proj_matrix()
-	_run_pipeline(view_proj_matrix, fb_rid, vertex_buffer, vertex_count)
-	#_update_rect_display()
 
 func _ready() -> void:
 	_set_properties()
-	
 	rd = RenderingServer.get_rendering_device()
-		
-	var vert_code := FileAccess.get_file_as_bytes("res://shaders/shadow_vert.spv")
-	var frag_code := FileAccess.get_file_as_bytes("res://shaders/shadow_frag.spv")
 
-	var shader_spirv := RDShaderSPIRV.new()
+	_load_shader()
+	_create_render_target()
+	_create_vertex_buffer()
+	_setup_pipeline()
+	
+	_run_pipeline(_get_view_proj_matrix())
+	_update_rect_display()
+
+	print("Shadow, online.")
+	
+func _process(delta: float) -> void:
+	var view_proj_matrix = _get_view_proj_matrix()
+	_run_pipeline(view_proj_matrix)
+	
+
+func _run_pipeline(view_proj_matrix: PackedByteArray):
+	rd.buffer_update(view_proj_uniform_buffer, 0, view_proj_matrix.size(), view_proj_matrix)
+
+	var draw_list = rd.draw_list_begin(fb_rid, RenderingDevice.DRAW_CLEAR_ALL, clear_colors, 1.0, 0, Rect2(), 0)
+
+	rd.draw_list_bind_render_pipeline(draw_list, pipeline)
+	rd.draw_list_bind_uniform_set(draw_list, view_proj_uniform_set, 0)
+	rd.draw_list_bind_vertex_array(draw_list, vertex_array_rid)
+	rd.draw_list_draw(draw_list, false, 1)
+	rd.draw_list_end()
+
+func _load_shader():
+	var vert_code = FileAccess.get_file_as_bytes("res://shaders/shadow_vert.spv")
+	var frag_code = FileAccess.get_file_as_bytes("res://shaders/shadow_frag.spv")
+
+	var shader_spirv = RDShaderSPIRV.new()
 	shader_spirv.bytecode_vertex = vert_code
 	shader_spirv.bytecode_fragment = frag_code
 
@@ -46,11 +72,10 @@ func _ready() -> void:
 		shader_rid = rd.shader_create_from_spirv(shader_spirv)
 	else:
 		push_error("Shader compilation failed!")
-		return
-	
-	var texture_format := RDTextureFormat.new()
-	#texture_format.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT # for a basic depth texture, for example
-	texture_format.format = RenderingDevice.DATA_FORMAT_R8G8B8A8_UNORM
+		
+func _create_render_target():
+	var texture_format = RDTextureFormat.new()
+	texture_format.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
 	texture_format.width = 2048
 	texture_format.height = 2048
 	texture_format.usage_bits = (
@@ -58,92 +83,86 @@ func _ready() -> void:
 		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT |
 		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT
 	)
-	
+
 	depth_texture = Texture2DRD.new()
-	
 	depth_texture.texture_rd_rid = rd.texture_create(texture_format, RDTextureView.new())
-	
 	fb_rid = rd.framebuffer_create([depth_texture.texture_rd_rid])
 	
-	var vertex_buffer_info := _get_vertex_buffer()
-	vertex_buffer = vertex_buffer_info.vertex_buffer
-	vertex_count = vertex_buffer_info.vertex_count
-	
-	var view_proj_matrix := _get_view_proj_matrix()
-	
-	debug_compare_vertex_projection()
-	
-	print(view_proj_matrix)
-	
-	_run_pipeline(view_proj_matrix, fb_rid, vertex_buffer, vertex_count)
-	
-	_update_rect_display()
-	print("Shadow, online.")
-	return
-	
-func _run_pipeline(view_proj_matrix: PackedByteArray, fb_rid: RID, vertex_buffer: RID, vertex_count: int) -> void:
-	var uniform_buffer := rd.uniform_buffer_create(view_proj_matrix.size(), view_proj_matrix)
 
-	var uniform := RDUniform.new()
-	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_UNIFORM_BUFFER
-	uniform.binding = 0
-	uniform.add_id(uniform_buffer)
+func _create_vertex_buffer():
+	var mesh = mesh_instance.mesh
+	if not mesh or mesh.get_surface_count() == 0:
+		return
 
-	var uniform_set := rd.uniform_set_create([uniform], shader_rid, 0)
+	var arrays = mesh.surface_get_arrays(0)
+	var vertex_array = arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+	var indices = arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+	var indexed_vertices := PackedVector3Array()
+	if indices.size() > 0:
+		var temp_array := []
+		for i in indices:
+			temp_array.append(vertex_array[i])
+		indexed_vertices = PackedVector3Array(temp_array)
+	else:
+		indexed_vertices = vertex_array
 
-	# Vertex format
-	var vertex_attr := RDVertexAttribute.new()
+	var float_array = PackedFloat32Array()
+	for v in indexed_vertices:
+		float_array.append_array([v.x, v.y, v.z])
+
+	var byte_array = float_array.to_byte_array()
+	vertex_buffer = rd.vertex_buffer_create(float_array.size() * 4, byte_array)
+	vertex_count = indexed_vertices.size()
+
+func _setup_pipeline():
+	var vertex_attr = RDVertexAttribute.new()
 	vertex_attr.format = RenderingDevice.DATA_FORMAT_R32G32B32_SFLOAT
 	vertex_attr.offset = 0
 	vertex_attr.stride = 12
 	vertex_attr.location = 0
 
-	var vertex_format := rd.vertex_format_create([vertex_attr])
-	var vertex_array_rid := rd.vertex_array_create(vertex_count, vertex_format, [vertex_buffer])
+	var vertex_format = rd.vertex_format_create([vertex_attr])
+	vertex_array_rid = rd.vertex_array_create(vertex_count, vertex_format, [vertex_buffer])
 
-	# Pipeline state
-	var raster := RDPipelineRasterizationState.new()
+	var raster = RDPipelineRasterizationState.new()
 	raster.cull_mode = RenderingDevice.POLYGON_CULL_DISABLED
 
-	var depth := RDPipelineDepthStencilState.new()
+	var depth = RDPipelineDepthStencilState.new()
 	depth.enable_depth_test = true
 	depth.enable_depth_write = true
 	depth.depth_compare_operator = RenderingDevice.COMPARE_OP_LESS
 
-	var msaa := RDPipelineMultisampleState.new()
-	var blend := RDPipelineColorBlendState.new()
-	var blend_attachment := RDPipelineColorBlendStateAttachment.new()
+	var msaa = RDPipelineMultisampleState.new()
+	var blend = RDPipelineColorBlendState.new()
+	var blend_attachment = RDPipelineColorBlendStateAttachment.new()
 	blend_attachment.enable_blend = false
 	blend.attachments = [blend_attachment]
 
-	var format_rid := rd.framebuffer_get_format(fb_rid)
+	var format_rid = rd.framebuffer_get_format(fb_rid)
+	pipeline = rd.render_pipeline_create(shader_rid, format_rid, vertex_format, RenderingDevice.RENDER_PRIMITIVE_TRIANGLES, raster, msaa, depth, blend)
 
-	var pipeline = rd.render_pipeline_create(shader_rid, format_rid, vertex_format, RenderingDevice.RENDER_PRIMITIVE_TRIANGLES, raster, msaa, depth, blend)
-	
-	var clear_colors = PackedColorArray([Color(0, 0, 0, 1), Color(0, 0, 0, 1), Color(0, 0, 0, 1)])
+	var view_proj_matrix = _get_view_proj_matrix()
+	view_proj_uniform_buffer = rd.uniform_buffer_create(view_proj_matrix.size(), view_proj_matrix)
 
-	#var draw_list := rd.draw_list_begin(fb_rid, RenderingDevice.DRAW_IGNORE_ALL, clear_colors, 1.0, 0, Rect2(), 0)
-	var draw_list := rd.draw_list_begin(fb_rid, RenderingDevice.DRAW_CLEAR_ALL, clear_colors, 1.0, 0, Rect2(), 0)
+	var uniform = RDUniform.new()
+	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_UNIFORM_BUFFER
+	uniform.binding = 0
+	uniform.add_id(view_proj_uniform_buffer)
 
-	rd.draw_list_bind_render_pipeline(draw_list, pipeline)
-	rd.draw_list_bind_uniform_set(draw_list, uniform_set, 0)
-	rd.draw_list_bind_vertex_array(draw_list, vertex_array_rid)
+	view_proj_uniform_set = rd.uniform_set_create([uniform], shader_rid, 0)
 
-	rd.draw_list_draw(draw_list, false, 1)
+	clear_colors = PackedColorArray([Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.5), Color(0, 0, 0, 1)])
 
-	rd.draw_list_end()
-	
 
 func _update_rect_display():
 	rect.texture =  depth_texture;
-	
-	print("Assigned texture RID:", depth_texture.texture_rd_rid)
-	print("Texture width/height:", depth_texture.get_width(), depth_texture.get_height())
-	print("Texture RID valid:", depth_texture.texture_rd_rid.is_valid())
-	
 
-	
-	
+func _set_properties():
+	mesh_instance = get_node(mesh_path)
+	camera = get_node(camera_path)
+	rect = get_node(rect_path)
+
+
 func _get_view_proj_matrix() -> PackedByteArray:
 	var view_mat := transform3d_to_mat4(camera.global_transform.affine_inverse())
 	var proj_mat := projection_to_mat4(camera.get_camera_projection())
@@ -153,46 +172,6 @@ func _get_view_proj_matrix() -> PackedByteArray:
 	return flatten_mat4_column_major(view_proj).to_byte_array()
 
 
-func _get_vertex_buffer() -> Dictionary:
-	var mesh = mesh_instance.mesh
-	var vertex_array := PackedVector3Array()
-	var indexed_vertices := PackedVector3Array()
-
-	if mesh and mesh.get_surface_count() > 0:
-		var arrays := mesh.surface_get_arrays(0)
-		vertex_array = arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
-		var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
-
-		if indices.size() > 0:
-			for i in indices:
-				indexed_vertices.append(vertex_array[i])
-		else:
-			indexed_vertices = vertex_array
-
-	var float_array := PackedFloat32Array()
-	for v in indexed_vertices:
-		float_array.append_array([v.x, v.y, v.z])
-
-	var byte_array = float_array.to_byte_array()
-	var vertex_buffer = rd.vertex_buffer_create(float_array.size() * 4, byte_array)
-
-	return {
-		"vertex_buffer": vertex_buffer,
-		"vertex_count": indexed_vertices.size()
-	}
-	
-	
-
-	return {
-		"vertex_buffer": vertex_buffer,
-		"vertex_count": vertex_array.size()
-	}
-
-func _set_properties():
-	mesh_instance = get_node(mesh_path)
-	camera = get_node(camera_path)
-	rect = get_node(rect_path)
-	
 func transform3d_to_mat4(xform: Transform3D) -> Array:
 	return [
 		[xform.basis.x.x, xform.basis.y.x, xform.basis.z.x, xform.origin.x],
@@ -220,48 +199,11 @@ func mat4_mul(a: Array, b: Array) -> Array:
 			row.append(sum)
 		result.append(row)
 	return result
-	
-func flatten_mat4(m: Array) -> PackedFloat32Array:
-	var arr := PackedFloat32Array()
-	for row in m:
-		for val in row:
-			arr.append(val)
-	return arr
-	
+
+
 func flatten_mat4_column_major(m: Array) -> PackedFloat32Array:
 	var arr := PackedFloat32Array()
 	for col in range(4):
 		for row in range(4):
 			arr.append(m[row][col])
 	return arr
-
-func debug_compare_vertex_projection():
-	var cam := camera as Camera3D
-	var view_proj := mat4_mul(projection_to_mat4(cam.get_camera_projection()), transform3d_to_mat4(cam.global_transform.affine_inverse()))
-	
-	var mesh := mesh_instance.mesh
-	if not mesh or mesh.get_surface_count() == 0:
-		return
-	
-	var vertices := mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array
-	
-	for v in vertices:
-		var v4 = [v.x, v.y, v.z, 1.0]
-		
-		# Multiply with matrix
-		var projected := Vector4()
-		for row in range(4):
-			projected[row] = view_proj[row][0] * v4[0] + view_proj[row][1] * v4[1] + view_proj[row][2] * v4[2] + view_proj[row][3] * v4[3]
-		
-		# Perspective divide
-		if projected.w != 0:
-			projected /= projected.w
-		
-		# Godot's own screen projection (returns in pixels)
-		var godot_proj := cam.unproject_position(v)
-		
-		var viewport_size = get_viewport().size
-		var screen_uv = Vector2((projected.x + 1.0) * 0.5, (1.0 - (projected.y + 1.0) * 0.5))
-		var screen_pos = screen_uv * Vector2(viewport_size)
-
-		print("Custom screen pos: ", screen_pos, " | Godot: ", godot_proj)
