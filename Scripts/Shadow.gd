@@ -10,8 +10,12 @@ var vertex_buffer: RID
 var vertex_array_rid: RID
 var vertex_count: int
 
-var depth_texture: Texture2DRD
+#var depth_texture: Texture2DRD
 var clear_colors: PackedColorArray
+
+var color_texture: Texture2DRD
+var depth_tex_rid: RID
+var fb_format_id: int
 
 var view_proj_uniform_buffer: RID
 var view_proj_uniform_set: RID
@@ -73,20 +77,71 @@ func _load_shader():
 	else:
 		push_error("Shader compilation failed!")
 		
+		
 func _create_render_target():
-	var texture_format = RDTextureFormat.new()
-	texture_format.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT
-	texture_format.width = 2048
-	texture_format.height = 2048
-	texture_format.usage_bits = (
+	color_texture = Texture2DRD.new()
+
+	var color_format := RDTextureFormat.new()
+	color_format.format = RenderingDevice.DATA_FORMAT_R32_SFLOAT
+	color_format.width = 2048
+	color_format.height = 2048
+	color_format.usage_bits = (
 		RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT |
-		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT |
-		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT
+		RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT |
+		RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
 	)
 
-	depth_texture = Texture2DRD.new()
-	depth_texture.texture_rd_rid = rd.texture_create(texture_format, RDTextureView.new())
-	fb_rid = rd.framebuffer_create([depth_texture.texture_rd_rid])
+	var color_tex_rid := rd.texture_create(color_format, RDTextureView.new())
+	color_texture.texture_rd_rid = color_tex_rid
+
+	fb_rid = rd.framebuffer_create([color_tex_rid])
+
+
+#func _create_render_target():
+	#color_texture = Texture2DRD.new()
+	#
+	## Create color and depth texture formats
+	#var color_format := RDTextureFormat.new()
+	#color_format.format = RenderingDevice.DATA_FORMAT_R32_SFLOAT
+	#color_format.usage_bits = (
+		#RenderingDevice.TEXTURE_USAGE_COLOR_ATTACHMENT_BIT |
+		#RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT |
+		#RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT
+	#)
+	#color_format.width = 2048
+	#color_format.height = 2048
+#
+	#var depth_format := RDTextureFormat.new()
+	#depth_format.format = RenderingDevice.DATA_FORMAT_D32_SFLOAT
+	#depth_format.usage_bits = RenderingDevice.TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
+	#depth_format.width = 2048
+	#depth_format.height = 2048
+#
+	## Create textures
+	#var color_tex_rid := rd.texture_create(color_format, RDTextureView.new())
+	#var depth_tex_rid := rd.texture_create(depth_format, RDTextureView.new())
+	#
+	#color_texture.texture_rd_rid = color_tex_rid
+#
+	## Attachment formats
+	#var color_attach := RDAttachmentFormat.new()
+	#color_attach.format = color_format.format
+	#color_attach.usage_flags = color_format.usage_bits
+#
+	#var depth_attach := RDAttachmentFormat.new()
+	#depth_attach.format = depth_format.format
+	#depth_attach.usage_flags = depth_format.usage_bits
+#
+	## Create framebuffer format
+	#var fb_format := rd.framebuffer_format_create([color_attach, depth_attach])
+#
+	## Define pass and assign texture indices
+	#var pass2 := RDFramebufferPass.new()
+	#pass2.color_attachments = [0]              # 0 = color_tex_rid
+	#pass2.depth_attachment = 1         # 1 = depth_tex_rid
+#
+	## Create framebuffer using multipass
+	#fb_rid = rd.framebuffer_create_multipass([color_tex_rid, depth_tex_rid], [pass2], fb_format)
 	
 
 func _create_vertex_buffer():
@@ -125,7 +180,7 @@ func _setup_pipeline():
 	vertex_array_rid = rd.vertex_array_create(vertex_count, vertex_format, [vertex_buffer])
 
 	var raster = RDPipelineRasterizationState.new()
-	raster.cull_mode = RenderingDevice.POLYGON_CULL_DISABLED
+	raster.cull_mode = RenderingDevice.POLYGON_CULL_BACK
 
 	var depth = RDPipelineDepthStencilState.new()
 	depth.enable_depth_test = true
@@ -155,7 +210,7 @@ func _setup_pipeline():
 
 
 func _update_rect_display():
-	rect.texture =  depth_texture;
+	rect.texture =  color_texture;
 
 func _set_properties():
 	mesh_instance = get_node(mesh_path)
