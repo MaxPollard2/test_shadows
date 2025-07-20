@@ -1,11 +1,9 @@
-[gd_scene load_steps=10 format=3 uid="uid://wvt2pdqt47jw"]
+[gd_scene load_steps=9 format=3 uid="uid://wvt2pdqt47jw"]
 
 [ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://btr0q7bmwp5p6" path="res://node_3d.gd" id="2_0xm2m"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
 
 [sub_resource type="Gradient" id="Gradient_ig7tw"]
 
@@ -28,7 +26,6 @@ sky_custom_fov = 13.3
 
 [node name="shadow" type="Node" parent="."]
 script = ExtResource("1_ig7tw")
-mesh_paths = Array[NodePath]([NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")])
 camera_path = NodePath("Node3D/Camera3D")
 rect_path = NodePath("TextureRect")
 metadata/_custom_type_script = "uid://brhpfcndqqdyo"
@@ -53,10 +50,6 @@ camera_path = NodePath("Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="shadow/Node3D"]
 transform = Transform3D(0.96435, -0.0204827, 0.263836, -0.0817216, 0.925219, 0.37053, -0.251696, -0.378881, 0.890561, 0, 0, 0)
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="shadow"]
-transform = Transform3D(1.80827, 0, 0, 0, 1, 0, 0, 0, 1.87196, 0, -0.545463, 0)
-mesh = SubResource("PlaneMesh_0xm2m")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_lquwl")
