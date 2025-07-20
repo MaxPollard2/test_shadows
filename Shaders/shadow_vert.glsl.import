@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://lbv5cqfuvirr"
+path="res://.godot/imported/shadow_vert.glsl-33074eaf9da1dacc01739a22a6849149.res"
+
+[deps]
+
+source_file="res://Shaders/shadow_vert.glsl"
+dest_files=["res://.godot/imported/shadow_vert.glsl-33074eaf9da1dacc01739a22a6849149.res"]
+
+[params]
+

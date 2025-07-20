@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://wvt2pdqt47jw"]
+
+[ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="shadow" type="Node" parent="."]
+script = ExtResource("1_ig7tw")
+mesh_path = NodePath("MeshInstance3D")
+camera_path = NodePath("Camera3D")
+rect_path = NodePath("TextureRect")
+metadata/_custom_type_script = "uid://brhpfcndqqdyo"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0150764, -0.0110416, 0.0021739)
+mesh = SubResource("BoxMesh_7dm0k")
+skeleton = NodePath("../..")
+
+[node name="Camera3D" type="Camera3D" parent="shadow"]
+transform = Transform3D(0.845681, -0.152031, 0.511576, 0, 0.958567, 0.284868, -0.533688, -0.240908, 0.810642, 2.33194, 1.02745, 3.32895)
+
+[node name="TextureRect" type="TextureRect" parent="shadow"]
+offset_left = 30.0
+offset_top = 38.0
+offset_right = 448.0
+offset_bottom = 256.0
+expand_mode = 1

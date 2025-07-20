@@ -1,8 +1,53 @@
-[gd_scene load_steps=2 format=3 uid="uid://wvt2pdqt47jw"]
+[gd_scene load_steps=8 format=3 uid="uid://wvt2pdqt47jw"]
+
+[ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
 
+[sub_resource type="Gradient" id="Gradient_ig7tw"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_0xm2m"]
+gradient = SubResource("Gradient_ig7tw")
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_h2yge"]
+panorama = SubResource("GradientTexture2D_0xm2m")
+
+[sub_resource type="Sky" id="Sky_1bvp3"]
+sky_material = SubResource("PanoramaSkyMaterial_h2yge")
+
+[sub_resource type="Environment" id="Environment_lquwl"]
+background_mode = 1
+background_color = Color(0.478431, 0.607843, 0.662745, 1)
+sky = SubResource("Sky_1bvp3")
+sky_custom_fov = 13.3
+
 [node name="Node3D" type="Node3D"]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="shadow" type="Node" parent="."]
+script = ExtResource("1_ig7tw")
+mesh_path = NodePath("MeshInstance3D")
+camera_path = NodePath("Camera3D")
+rect_path = NodePath("TextureRect")
+metadata/_custom_type_script = "uid://brhpfcndqqdyo"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0150764, -0.0110416, 0.0021739)
 mesh = SubResource("BoxMesh_7dm0k")
+skeleton = NodePath("../..")
+
+[node name="Camera3D" type="Camera3D" parent="shadow"]
+transform = Transform3D(0.997235, -0.0120027, -0.0733456, 0.0139798, 0.999551, 0.0265017, 0.0729951, -0.0274537, 0.996954, -0.0019151, 0, 1.63678)
+
+[node name="TextureRect" type="TextureRect" parent="shadow"]
+offset_left = 21.0
+offset_top = 20.0
+offset_right = 548.0
+offset_bottom = 305.0
+expand_mode = 1
+flip_v = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_lquwl")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.908406, 0, 0.418089, -0.107081, 0.966645, 0.232662, -0.404144, -0.256121, 0.878106, 0, 0, 4.19214)

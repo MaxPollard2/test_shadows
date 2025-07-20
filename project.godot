@@ -11,5 +11,6 @@ config_version=5
 [application]
 
 config/name="Test Shadows"
+run/main_scene="uid://wvt2pdqt47jw"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
