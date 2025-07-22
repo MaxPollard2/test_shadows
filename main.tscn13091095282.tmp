@@ -1,12 +1,32 @@
-[gd_scene load_steps=18 format=3 uid="uid://wvt2pdqt47jw"]
+[gd_scene load_steps=17 format=3 uid="uid://wvt2pdqt47jw"]
 
 [ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://btr0q7bmwp5p6" path="res://node_3d.gd" id="2_0xm2m"]
 [ext_resource type="Shader" uid="uid://d2g7i3rf3d6v1" path="res://main.gdshader" id="3_h2yge"]
-[ext_resource type="Script" uid="uid://cqwfpjuew82i8" path="res://Scripts/ShadowMesh.gd" id="3_lquwl"]
 [ext_resource type="Script" uid="uid://2neuuxlm7ybj" path="res://fps.gd" id="4_1bvp3"]
 
-[sub_resource type="Texture2DRD" id="Texture2DRD_lquwl"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h2yge"]
+render_priority = 0
+shader = ExtResource("3_h2yge")
+
+[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
+material = SubResource("ShaderMaterial_h2yge")
+
+[sub_resource type="Texture2DRD" id="Texture2DRD_1bvp3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bvp3"]
+render_priority = 0
+shader = ExtResource("3_h2yge")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
+material = SubResource("ShaderMaterial_1bvp3")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lquwl"]
+render_priority = 0
+shader = ExtResource("3_h2yge")
+
+[sub_resource type="SphereMesh" id="SphereMesh_7mycd"]
+material = SubResource("ShaderMaterial_lquwl")
 
 [sub_resource type="Gradient" id="Gradient_ig7tw"]
 
@@ -25,48 +45,40 @@ background_color = Color(0.478431, 0.607843, 0.662745, 1)
 sky = SubResource("Sky_1bvp3")
 sky_custom_fov = 13.3
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_h2yge"]
-render_priority = 0
-shader = ExtResource("3_h2yge")
-
-[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
-material = SubResource("ShaderMaterial_h2yge")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bvp3"]
-render_priority = 0
-shader = ExtResource("3_h2yge")
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
-material = SubResource("ShaderMaterial_1bvp3")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_lquwl"]
-render_priority = 0
-shader = ExtResource("3_h2yge")
-
-[sub_resource type="SphereMesh" id="SphereMesh_7mycd"]
-material = SubResource("ShaderMaterial_lquwl")
-
 [node name="Node3D" type="Node3D"]
 
-[node name="shadow" type="Node3D" parent="."]
-transform = Transform3D(-0.703245, -0.0361887, -0.710026, -0.0104916, 0.999123, -0.0405321, 0.71087, -0.0210547, -0.703008, 6.89621, 1.09954, 0.905243)
+[node name="shadow" type="Node" parent="."]
 script = ExtResource("1_ig7tw")
-rect_path = NodePath("TextureRect")
+mesh_paths = Array[NodePath]([NodePath("MeshInstance3D"), NodePath("MeshInstance3D2"), NodePath("MeshInstance3D3")])
 camera_path = NodePath("Camera3D")
+player_camera_path = NodePath("../Node3D3/Camera3D")
+rect_path = NodePath("TextureRect")
+metadata/_custom_type_script = "uid://brhpfcndqqdyo"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0150764, -0.0110416, 0.0021739)
+mesh = SubResource("BoxMesh_7dm0k")
+skeleton = NodePath("../..")
 
 [node name="TextureRect" type="TextureRect" parent="shadow"]
 offset_left = 21.0
 offset_top = 20.0
-offset_right = 654.0
-offset_bottom = 610.0
-texture = SubResource("Texture2DRD_lquwl")
+offset_right = 356.0
+offset_bottom = 360.0
+texture = SubResource("Texture2DRD_1bvp3")
 expand_mode = 3
 flip_v = true
 
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(3.4087, 0, 0, 0, 1.06076, 0, 0, 0, 3.11006, 0, -0.545463, 0)
+mesh = SubResource("PlaneMesh_0xm2m")
+
 [node name="Camera3D" type="Camera3D" parent="shadow"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-projection = 1
-size = 5.0
+transform = Transform3D(-0.999998, 0, -0.00221649, -0.000955096, 0.902397, 0.430904, 0.00200015, 0.430905, -0.902395, 0.575045, 1.16846, -2.60906)
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.649652, -0.14699, -1.0505)
+mesh = SubResource("SphereMesh_7mycd")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_lquwl")
@@ -89,29 +101,3 @@ current = true
 offset_right = 40.0
 offset_bottom = 23.0
 script = ExtResource("4_1bvp3")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0150764, -0.0110416, 0.0021739)
-mesh = SubResource("BoxMesh_7dm0k")
-
-[node name="ShadowMesh" type="Node" parent="MeshInstance3D"]
-script = ExtResource("3_lquwl")
-metadata/_custom_type_script = "uid://cqwfpjuew82i8"
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
-transform = Transform3D(3.4087, 0, 0, 0, 1.06076, 0, 0, 0, 3.11006, 0, -0.545463, 0)
-mesh = SubResource("PlaneMesh_0xm2m")
-skeleton = NodePath("../shadow")
-
-[node name="ShadowMesh" type="Node" parent="MeshInstance3D2"]
-script = ExtResource("3_lquwl")
-metadata/_custom_type_script = "uid://cqwfpjuew82i8"
-
-[node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.649652, 0.00674301, -1.0505)
-mesh = SubResource("SphereMesh_7mycd")
-skeleton = NodePath("../shadow")
-
-[node name="ShadowMesh" type="Node" parent="MeshInstance3D3"]
-script = ExtResource("3_lquwl")
-metadata/_custom_type_script = "uid://cqwfpjuew82i8"

@@ -14,6 +14,7 @@ var pitch: float = 0.0
 func _ready():
 	# Create and add a camera if not already existing
 	camera = get_node(camera_path)
+	camera.current = true
 	
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
@@ -31,7 +32,7 @@ func _unhandled_input(event):
 
 	if event is InputEventMouseMotion:
 		yaw -= event.relative.x * look_sensitivity
-		pitch -= event.relative.y * look_sensitivity * -1
+		pitch -= event.relative.y * look_sensitivity# * -1
 		pitch = clamp(pitch, deg_to_rad(-89), deg_to_rad(89)) # Prevent flipping over
 
 
@@ -42,17 +43,21 @@ func _process(delta):
 	var forward = -current_basis.z.normalized()
 	var right = up.cross(forward).normalized()
 	
-	if yaw != 0.0:
-		forward = forward.rotated(up, -yaw)
-		right = up.cross(forward).normalized()
-		yaw = 0.0
+	#if yaw != 0.0:
+		#forward = forward.rotated(up, -yaw)
+		#right = up.cross(forward).normalized()
+		#yaw = 0.0
 		
 	var pitch_forward = forward.rotated(right, pitch)
 	var camera_up = pitch_forward.cross(right).normalized()
 
 	# Apply new basis
-	global_transform.basis = Basis(right, up, -forward).orthonormalized()
-	camera.global_transform.basis = Basis(right, camera_up, -pitch_forward).orthonormalized()
+	#global_transform.basis = Basis(right, up, -forward).orthonormalized()
+	#camera.global_transform.basis = Basis(right, camera_up, -pitch_forward).orthonormalized()
+	var rotation_basis := Basis()
+	rotation_basis = Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch)
+
+	camera.global_transform = Transform3D(rotation_basis, global_position)
 
 	# Movement
 	var direction = Vector3.ZERO

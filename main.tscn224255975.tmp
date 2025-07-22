@@ -1,0 +1,90 @@
+[gd_scene load_steps=15 format=3 uid="uid://wvt2pdqt47jw"]
+
+[ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://btr0q7bmwp5p6" path="res://node_3d.gd" id="2_0xm2m"]
+[ext_resource type="Shader" uid="uid://d2g7i3rf3d6v1" path="res://main.gdshader" id="3_h2yge"]
+[ext_resource type="Script" uid="uid://2neuuxlm7ybj" path="res://fps.gd" id="4_1bvp3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h2yge"]
+render_priority = 0
+shader = ExtResource("3_h2yge")
+
+[sub_resource type="BoxMesh" id="BoxMesh_7dm0k"]
+material = SubResource("ShaderMaterial_h2yge")
+
+[sub_resource type="Texture2DRD" id="Texture2DRD_h2yge"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1bvp3"]
+render_priority = 0
+shader = ExtResource("3_h2yge")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_0xm2m"]
+material = SubResource("ShaderMaterial_1bvp3")
+
+[sub_resource type="Gradient" id="Gradient_ig7tw"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_0xm2m"]
+gradient = SubResource("Gradient_ig7tw")
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_h2yge"]
+panorama = SubResource("GradientTexture2D_0xm2m")
+
+[sub_resource type="Sky" id="Sky_1bvp3"]
+sky_material = SubResource("PanoramaSkyMaterial_h2yge")
+
+[sub_resource type="Environment" id="Environment_lquwl"]
+background_mode = 1
+background_color = Color(0.478431, 0.607843, 0.662745, 1)
+sky = SubResource("Sky_1bvp3")
+sky_custom_fov = 13.3
+
+[node name="Node3D" type="Node3D"]
+
+[node name="shadow" type="Node" parent="."]
+script = ExtResource("1_ig7tw")
+mesh_paths = Array[NodePath]([NodePath("MeshInstance3D"), NodePath("MeshInstance3D2")])
+camera_path = NodePath("Camera3D")
+rect_path = NodePath("TextureRect")
+metadata/_custom_type_script = "uid://brhpfcndqqdyo"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0150764, -0.0110416, 0.0021739)
+mesh = SubResource("BoxMesh_7dm0k")
+skeleton = NodePath("../..")
+
+[node name="TextureRect" type="TextureRect" parent="shadow"]
+offset_left = 21.0
+offset_top = 20.0
+offset_right = 548.0
+offset_bottom = 305.0
+texture = SubResource("Texture2DRD_h2yge")
+expand_mode = 1
+flip_v = true
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="shadow"]
+transform = Transform3D(1.80827, 0, 0, 0, 1, 0, 0, 0, 1.87196, 0, -0.545463, 0)
+mesh = SubResource("PlaneMesh_0xm2m")
+
+[node name="Camera3D" type="Camera3D" parent="shadow"]
+transform = Transform3D(0.89524, 0.0667311, -0.440559, 0.13521, 0.901419, 0.411292, 0.424574, -0.427773, 0.797964, -1.35235, 1.87302, 3.65078)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_lquwl")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.908406, 0, 0.418089, -0.107081, 0.966645, 0.232662, -0.404144, -0.256121, 0.878106, 0, 0, 4.19214)
+
+[node name="Node3D3" type="Node3D" parent="."]
+transform = Transform3D(0.959598, -0.222514, 0.172217, 0.13521, 0.90142, 0.411292, -0.246758, -0.37139, 0.895087, -1.35235, 1.87302, 3.65078)
+script = ExtResource("2_0xm2m")
+camera_path = NodePath("Camera3D")
+
+[node name="Camera3D" type="Camera3D" parent="Node3D3"]
+transform = Transform3D(0.772586, 0.291472, -0.564053, -0.235005, 0.956578, 0.172422, 0.589817, -0.000655085, 0.807536, 0, 0, 0)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 23.0
+script = ExtResource("4_1bvp3")
