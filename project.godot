@@ -68,3 +68,19 @@ light_pos={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+shadow_tier_1_size={
+"type": "float",
+"value": 0.0
+}
+shadow_tier_2_size={
+"type": "float",
+"value": 0.0
+}
+shadow_tier_2_view_proj={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
+shadow_tier_2_map={
+"type": "sampler2D",
+"value": ""
+}

@@ -1,57 +1,76 @@
 shader_type spatial;
 render_mode unshaded;
 
+global uniform vec3 light_pos;
+
 global uniform sampler2D shadow_map;
 global uniform mat4 shadow_view_proj;
-global uniform vec3 light_pos;
+global uniform float shadow_tier_1_size;
+
+global uniform sampler2D shadow_tier_2_map;
+global uniform float shadow_tier_2_size;
 
 varying vec3 world_position;
 
-void vertex() {
-    // Compute world-space position and pass it to the fragment shader
-    world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-}
+const int SAMPLES = 4;
+const float TEXEL_SIZE = 1.0 / 4096.0;
+const float RADIUS_SCALE = 2.0 * 0.2;
 
-void fragment() {
-	// Compute light direction and world normal
-	vec3 light_dir = normalize(light_pos - world_position);
-	vec3 world_normal = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	float light_amount = max(dot(light_dir, world_normal), 0.0);
-
-	// Transform world position into shadow map space
-	vec4 light_space_pos = shadow_view_proj * vec4(world_position, 1.0);
-	vec3 shadow_coord = light_space_pos.xyz / light_space_pos.w;
-	shadow_coord.xy = shadow_coord.xy * 0.5 + 0.5; // NDC → [0, 1]
-
-	// Early discard if out of shadow map bounds
-
-
-	// PCF settings
-	float bias = max(0.000001 * (1.0 - dot(world_normal, light_dir)), 0.0000005);
+float compute_shadow_pcf(sampler2D shadow_tex, vec2 uv, float compare_depth, float radius) {
 	float shadow = 0.0;
-	int samples = 4; // 4x4 grid
-	float radius = 1.0 / 4096.0 * 2.0 * 0.2; // Adjust radius based on resolution
-
-	// Percentage Closer Filtering (PCF)
-	for (int x = -samples; x <= samples; x++) {
-		for (int y = -samples; y <= samples; y++) {
+	for (int x = -SAMPLES; x <= SAMPLES; x++) {
+		for (int y = -SAMPLES; y <= SAMPLES; y++) {
 			vec2 offset = vec2(float(x), float(y)) * radius;
-			float sampled_depth = texture(shadow_map, shadow_coord.xy + offset).r;
-			if (shadow_coord.z - bias > sampled_depth) {
+			float sampled = texture(shadow_tex, clamp(uv + offset, vec2(0.001), vec2(0.999))).r;
+			if (compare_depth > sampled) {
 				shadow += 1.0;
 			}
 		}
 	}
-	
-	float total_samples = float((2 * samples + 1) * (2 * samples + 1));
-	float shadow_factor = 1.0 - (shadow / total_samples); // 1.0 = lit, 0.0 = fully shadowed
+	return shadow;
+}
 
-	// Final shaded color
+void vertex() {
+	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
+void fragment() {
+	vec3 light_dir = normalize(light_pos - world_position);
+	vec3 world_normal = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	float light_amount = max(dot(light_dir, world_normal), 0.0);
+
+	float bias = max(0.000005 * (1.0 - dot(world_normal, light_dir)), 0.0000005);
+	float radius = TEXEL_SIZE * RADIUS_SCALE;
+
+	// Project into shadow tier 1 space
+	vec4 light_space_pos = shadow_view_proj * vec4(world_position, 1.0);
+	vec3 shadow_coord = light_space_pos.xyz / light_space_pos.w;
+	vec2 shadow_uv = shadow_coord.xy; // in range [-1, 1]
+
+	float shadow = 0.0;
+	float total_samples = float((2 * SAMPLES + 1) * (2 * SAMPLES + 1));
+
+	// Try tier 1
+	if (all(lessThan(abs(shadow_uv), vec2(1.0)))) {
+		vec2 uv = shadow_uv * 0.5 + 0.5;
+		shadow = compute_shadow_pcf(shadow_map, uv, shadow_coord.z - bias, radius);
+	}
+	// Fallback to tier 2
+	else {
+		float scale = shadow_tier_1_size / shadow_tier_2_size;
+		vec2 uv_tier_2 = shadow_uv * scale;
+		if (all(lessThan(abs(uv_tier_2), vec2(1.0)))) {
+			vec2 uv = uv_tier_2 * 0.5 + 0.5;
+			shadow = compute_shadow_pcf(shadow_tier_2_map, uv, shadow_coord.z - bias, radius);
+		}
+	}
+
+	// Light/shadow mix
+	float shadow_factor = 1.0 - (shadow / total_samples);
+	if (shadow == 0.0) {
+		shadow_factor = 1.0; // fully lit
+	}
+
 	vec3 base_color = vec3(0.255, 0.357, 0.451);
 	ALBEDO = base_color * light_amount * shadow_factor;
-	
-	if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 ||
-		shadow_coord.y < 0.0 || shadow_coord.y > 1.0) {
-		ALBEDO = vec3(0.255, 0.357, 0.451) * light_amount;
-	}
 }

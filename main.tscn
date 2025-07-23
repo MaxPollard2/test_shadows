@@ -1,14 +1,35 @@
-[gd_scene load_steps=22 format=3 uid="uid://wvt2pdqt47jw"]
+[gd_scene load_steps=24 format=3 uid="uid://wvt2pdqt47jw"]
 
 [ext_resource type="Script" uid="uid://brhpfcndqqdyo" path="res://Scripts/Shadow.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://btr0q7bmwp5p6" path="res://node_3d.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://5nywk5u3seea" path="res://Scripts/ShadowTierSettings.gd" id="2_5vw27"]
 [ext_resource type="ArrayMesh" uid="uid://b5fai1321beoq" path="res://Assets/Untitled.obj" id="2_7mycd"]
 [ext_resource type="Shader" uid="uid://d2g7i3rf3d6v1" path="res://main.gdshader" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://cqwfpjuew82i8" path="res://Scripts/ShadowMesh.gd" id="3_lquwl"]
 [ext_resource type="Script" uid="uid://2neuuxlm7ybj" path="res://fps.gd" id="4_1bvp3"]
 [ext_resource type="ArrayMesh" uid="uid://bckovj6xal7ur" path="res://Assets/cessna3.obj" id="7_272bh"]
 
-[sub_resource type="Texture2DRD" id="Texture2DRD_272bh"]
+[sub_resource type="Resource" id="Resource_kek77"]
+script = ExtResource("2_5vw27")
+resolution = Vector2(4096, 4096)
+size = 20.0
+near = 0.1
+far = 40000.0
+global_uniform_texture_name = "shadow_map"
+global_uniform_mat4_name = "shadow_view_proj"
+global_uniform_size_name = "shadow_tier_1_size"
+metadata/_custom_type_script = "uid://5nywk5u3seea"
+
+[sub_resource type="Resource" id="Resource_5vw27"]
+script = ExtResource("2_5vw27")
+resolution = Vector2(4096, 4096)
+size = 100.0
+near = 0.1
+far = 40000.0
+global_uniform_texture_name = "shadow_tier_2_map"
+global_uniform_mat4_name = "shadow_tier_2_view_proj"
+global_uniform_size_name = "shadow_tier_2_size"
+metadata/_custom_type_script = "uid://5nywk5u3seea"
 
 [sub_resource type="Gradient" id="Gradient_ig7tw"]
 
@@ -62,30 +83,20 @@ shader = ExtResource("3_h2yge")
 transform = Transform3D(0.149535, -0.264616, 0.95269, 0, 0.963523, 0.267625, -0.988756, -0.0400194, 0.144081, 8.86886, 0.892861, 0.255789)
 script = ExtResource("1_ig7tw")
 orthographic = true
-size = 50.0
-near = 1.0
-far = 100000.0
 rect_path = NodePath("TextureRect")
-camera_path = NodePath("Camera3D")
+tier_settings = Array[ExtResource("2_5vw27")]([SubResource("Resource_kek77"), SubResource("Resource_5vw27")])
 
 [node name="TextureRect" type="TextureRect" parent="shadow"]
+visible = false
 offset_left = 21.0
 offset_top = 20.0
 offset_right = 654.0
 offset_bottom = 610.0
-texture = SubResource("Texture2DRD_272bh")
 expand_mode = 3
 flip_v = true
 
-[node name="Camera3D" type="Camera3D" parent="shadow"]
-projection = 1
-size = 5.0
-
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_lquwl")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.908406, 0, 0.418089, -0.107081, 0.966645, 0.232662, -0.404144, -0.256121, 0.878106, 0, 0, 4.19214)
 
 [node name="Node3D3" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.873, 3.651)
@@ -93,7 +104,7 @@ script = ExtResource("2_0xm2m")
 camera_path = NodePath("Camera3D")
 
 [node name="Camera3D" type="Camera3D" parent="Node3D3"]
-transform = Transform3D(1, 0, 0, 0, 0.999999, 0, 0, 0, 1, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.92694, 0, 0)
 current = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
@@ -120,7 +131,7 @@ script = ExtResource("3_lquwl")
 metadata/_custom_type_script = "uid://cqwfpjuew82i8"
 
 [node name="MeshInstance3D3" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0.796212)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1.39494)
 mesh = SubResource("SphereMesh_7mycd")
 skeleton = NodePath("../shadow")
 
@@ -144,5 +155,50 @@ mesh = ExtResource("7_272bh")
 surface_material_override/0 = SubResource("ShaderMaterial_5vw27")
 
 [node name="ShadowMesh" type="Node" parent="Cessna3"]
+script = ExtResource("3_lquwl")
+metadata/_custom_type_script = "uid://cqwfpjuew82i8"
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 29.2678)
+mesh = SubResource("BoxMesh_7dm0k")
+
+[node name="ShadowMesh" type="Node" parent="MeshInstance3D4"]
+script = ExtResource("3_lquwl")
+metadata/_custom_type_script = "uid://cqwfpjuew82i8"
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.4087, 0, 0, 0, 1.06076, 0, 0, 0, 3.11006, 0, -0.5, 29.2678)
+mesh = SubResource("PlaneMesh_0xm2m")
+skeleton = NodePath("../shadow")
+
+[node name="ShadowMesh" type="Node" parent="MeshInstance3D5"]
+script = ExtResource("3_lquwl")
+metadata/_custom_type_script = "uid://cqwfpjuew82i8"
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 30.6627)
+mesh = SubResource("SphereMesh_7mycd")
+skeleton = NodePath("../shadow")
+
+[node name="ShadowMesh" type="Node" parent="MeshInstance3D6"]
+script = ExtResource("3_lquwl")
+metadata/_custom_type_script = "uid://cqwfpjuew82i8"
+
+[node name="Untitled2" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.115408, -0.281866, 0.396526, -0.118654, 0.378916, 0.303882, -0.471807, -0.164239, 0.0205703, 2.13634, -0.263469, 28.395)
+mesh = ExtResource("2_7mycd")
+skeleton = NodePath("../shadow")
+surface_material_override/0 = SubResource("ShaderMaterial_272bh")
+
+[node name="ShadowMesh" type="Node" parent="Untitled2"]
+script = ExtResource("3_lquwl")
+metadata/_custom_type_script = "uid://cqwfpjuew82i8"
+
+[node name="Cessna4" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.667606, -0.152799, 0.728667, 0.34963, 0.928425, -0.125643, -0.657315, 0.338644, 0.673244, -6.15103, 1.60267, 30.118)
+mesh = ExtResource("7_272bh")
+surface_material_override/0 = SubResource("ShaderMaterial_5vw27")
+
+[node name="ShadowMesh" type="Node" parent="Cessna4"]
 script = ExtResource("3_lquwl")
 metadata/_custom_type_script = "uid://cqwfpjuew82i8"
