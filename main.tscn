@@ -83,7 +83,6 @@ shader = ExtResource("3_h2yge")
 transform = Transform3D(0.149535, -0.264616, 0.95269, 0, 0.963523, 0.267625, -0.988756, -0.0400194, 0.144081, 8.86886, 0.892861, 0.255789)
 script = ExtResource("1_ig7tw")
 orthographic = true
-rect_path = NodePath("TextureRect")
 tier_settings = Array[ExtResource("2_5vw27")]([SubResource("Resource_kek77"), SubResource("Resource_5vw27")])
 
 [node name="TextureRect" type="TextureRect" parent="shadow"]

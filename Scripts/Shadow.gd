@@ -17,7 +17,7 @@ var view : Projection
 			shadow_tier.orthographic = value
 			shadow_tier._update_projection()
 
-@export var rect_path: NodePath
+#@export var rect_path: NodePath
 @export var camera_path: NodePath
 
 var mesh_instances: Array[ShadowMesh] = []
@@ -27,7 +27,7 @@ var mesh_instances: Array[ShadowMesh] = []
 
 var shadow_tiers: Array[ShadowTier] = []
 
-var rect: TextureRect
+#var rect: TextureRect
 
 
 func _ready() -> void:
@@ -57,14 +57,14 @@ func _ready() -> void:
 	
 	_run_pipeline()
 	
-	rect = get_node(rect_path)
-	rect.texture =  shadow_tiers[0].color_texture;
+	#rect = get_node(rect_path)
+	#rect.texture =  shadow_tiers[0].color_texture;
 	
 	get_tree().connect("node_added", Callable(self, "_on_node_added"))
 	call_deferred("_register_existing_shadow_meshes")
 	call_deferred("_run", 0.0)
 
-	print("Shadow, online.")	
+	#print("Shadow, online.")	
 	
 	
 	
@@ -75,17 +75,17 @@ func _process(delta: float) -> void:
 	
 	view = Projection(get_fixed_view_transform(global_transform))
 	
-var counter = 0
-var first = true
-func _physics_process(delta: float) -> void:
-	counter += 1
-	if counter == 120:
-		if first:
-			rect.texture =  shadow_tiers[0].color_texture;
-		else:
-			rect.texture =  shadow_tiers[1].color_texture;
-		first = !first
-		counter = 0
+#var counter = 0
+#var first = true
+#func _physics_process(delta: float) -> void:
+	#counter += 1
+	#if counter == 120:
+		#if first:
+			#rect.texture =  shadow_tiers[0].color_texture;
+		#else:
+			#rect.texture =  shadow_tiers[1].color_texture;
+		#first = !first
+		#counter = 0
 	
 
 func _run(delta: float):
@@ -218,5 +218,5 @@ func flatten_projection_column_major(p: Projection) -> PackedFloat32Array:
 	
 func _exit_tree():
 	rd.free_rid(pipeline)
-	rect.texture = null
+	#rect.texture = null
 	mesh_instances.clear()
