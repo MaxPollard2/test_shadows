@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bckovj6xal7ur"
+path="res://.godot/imported/cessna3.obj-ca2a97ed0e5784db6f9df3555c37d6fd.mesh"
+
+[deps]
+
+files=["res://.godot/imported/cessna3.obj-ca2a97ed0e5784db6f9df3555c37d6fd.mesh"]
+
+source_file="res://Assets/cessna3.obj"
+dest_files=["res://.godot/imported/cessna3.obj-ca2a97ed0e5784db6f9df3555c37d6fd.mesh", "res://.godot/imported/cessna3.obj-ca2a97ed0e5784db6f9df3555c37d6fd.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

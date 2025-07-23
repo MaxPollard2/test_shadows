@@ -1,3 +1,4 @@
+@tool
 extends Node
 class_name ShadowMesh
 
@@ -12,14 +13,24 @@ var index_array_rid: RID
 var model_buffer: RID
 var model_uniform_set: RID
 
+var last_global_transform: Transform3D
+
 func _ready():
 	add_to_group("shadow_meshes")
 	var parent = get_parent()
 	if parent is MeshInstance3D:
 		mesh = parent.mesh
-		print("hello")
 		if mesh:
+			last_global_transform = parent.global_transform
 			emit_signal("shadow_caster_ready", self)
+			
+
+			
+func _process(_delta: float) -> void:
+	var current_transform = get_parent().global_transform
+	if current_transform != last_global_transform:
+		last_global_transform = current_transform
+		update_model_matrix()
 
 func initialize(rd_: RenderingDevice, shader_rid_: RID):
 	rd = rd_
@@ -44,7 +55,7 @@ func initialize(rd_: RenderingDevice, shader_rid_: RID):
 	index_array_rid = rd.index_array_create(index_buffer, 0, indices.size())
 	
 	var model_matrix = flatten_mat4_column_major(transform3d_to_mat4(get_parent().global_transform))
-	var model_buffer = rd.uniform_buffer_create(model_matrix.size() * 4, model_matrix.to_byte_array())
+	model_buffer = rd.uniform_buffer_create(model_matrix.size() * 4, model_matrix.to_byte_array())
 
 	var model_uniform = RDUniform.new()
 	model_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_UNIFORM_BUFFER
@@ -63,6 +74,11 @@ func update_model_matrix():
 func get_vertex_array_rid() -> RID: return vertex_array_rid
 func get_index_array_rid() -> RID: return index_array_rid
 func get_model_uniform_set() -> RID: return model_uniform_set
+
+func _exit_tree() -> void:
+	rd.free_rid(vertex_array_rid)
+	rd.free_rid(index_array_rid)
+	rd.free_rid(model_uniform_set)
 
 func transform3d_to_mat4(xform: Transform3D) -> Array:
 	return [
